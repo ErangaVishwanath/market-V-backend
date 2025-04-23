@@ -29,49 +29,48 @@ jobs:
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
           mongodb-port: 27017
-          mongodb-replica-set: test-rs
           mongodb-db: test
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Wait for MongoDB
+      - name: Wait for MongoDB and verify connection
         run: |
-          timeout 30 bash -c '
-          until nc -z localhost 27017
-          do
-            echo "Waiting for MongoDB to be ready..."
-            sleep 1
-          done
-          '
+          echo "Waiting for MongoDB to be ready..."
+          timeout 30 bash -c 'until mongosh --eval "db.runCommand({ping:1})" --quiet; do sleep 1; done'
+          echo "MongoDB is ready!"
 
       - name: Run unit tests
         run: npm run test:unit
         env:
           NODE_ENV: test
-          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          CONNECTION_STRING: mongodb://localhost:27017/test
           MONGODB_TIMEOUT: 30000
+          MOCHA_TIMEOUT: 30000
 
       - name: Run integration tests
         run: npm run test:integration
         env:
           NODE_ENV: test
-          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          CONNECTION_STRING: mongodb://localhost:27017/test
           MONGODB_TIMEOUT: 30000
+          MOCHA_TIMEOUT: 30000
 
       - name: Run performance tests
         run: npm run test:performance
         env:
           NODE_ENV: test
-          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          CONNECTION_STRING: mongodb://localhost:27017/test
           MONGODB_TIMEOUT: 30000
+          MOCHA_TIMEOUT: 30000
 
       - name: Generate test coverage
         run: npm run test:coverage
         env:
           NODE_ENV: test
-          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          CONNECTION_STRING: mongodb://localhost:27017/test
           MONGODB_TIMEOUT: 30000
+          MOCHA_TIMEOUT: 30000
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4

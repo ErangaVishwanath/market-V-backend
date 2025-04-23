@@ -14,10 +14,8 @@ describe("Database Connection", () => {
 
   beforeEach(() => {
     mongooseConnectStub = sinon.stub(mongoose, "connect");
-
     consoleLogStub = sinon.stub(console, "log");
     consoleErrorStub = sinon.stub(console, "error");
-
     processExitStub = sinon.stub(process, "exit");
   });
 
@@ -33,9 +31,21 @@ describe("Database Connection", () => {
 
     await connectDB();
 
+    const expectedOptions = {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+    };
+
     expect(mongooseConnectStub.calledOnce).to.be.true;
-    expect(mongooseConnectStub.calledWith(process.env.CONNECTION_STRING)).to.be
-      .true;
+    expect(mongooseConnectStub.firstCall.args[0]).to.equal(
+      process.env.CONNECTION_STRING
+    );
+    expect(mongooseConnectStub.firstCall.args[1]).to.deep.equal(
+      expectedOptions
+    );
     expect(consoleLogStub.calledWith("MongoDB connected")).to.be.true;
   });
 
@@ -45,7 +55,12 @@ describe("Database Connection", () => {
 
     await connectDB();
 
-    expect(consoleErrorStub.calledWith(testError.message)).to.be.true;
+    expect(
+      consoleErrorStub.calledWith(
+        "MongoDB connection error:",
+        testError.message
+      )
+    ).to.be.true;
     expect(processExitStub.calledWith(1)).to.be.true;
   });
 });
