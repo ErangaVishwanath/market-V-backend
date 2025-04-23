@@ -2,13 +2,25 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.CONNECTION_STRING, {
+    const mongoURI = process.env.MONGODB_URI || process.env.CONNECTION_STRING;
+    const options = {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    });
-    console.log("MongoDB connected"); // Matches the test expectation
+      serverSelectionTimeoutMS: process.env.MONGODB_TIMEOUT
+        ? parseInt(process.env.MONGODB_TIMEOUT)
+        : 30000,
+      socketTimeoutMS: process.env.MONGODB_TIMEOUT
+        ? parseInt(process.env.MONGODB_TIMEOUT)
+        : 30000,
+      connectTimeoutMS: process.env.MONGODB_TIMEOUT
+        ? parseInt(process.env.MONGODB_TIMEOUT)
+        : 30000,
+    };
+
+    await mongoose.connect(mongoURI, options);
+    console.log("MongoDB connected");
   } catch (error) {
-    console.error(error.message); // Matches the test expectation
+    console.error("MongoDB connection error:", error.message);
     process.exit(1);
   }
 };

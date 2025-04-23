@@ -28,29 +28,50 @@ jobs:
         uses: supercharge/mongodb-github-action@1.10.0
         with:
           mongodb-version: ${{ matrix.mongodb-version }}
+          mongodb-port: 27017
+          mongodb-replica-set: test-rs
+          mongodb-db: test
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Wait for MongoDB
+        run: |
+          timeout 30 bash -c '
+          until nc -z localhost 27017
+          do
+            echo "Waiting for MongoDB to be ready..."
+            sleep 1
+          done
+          '
 
       - name: Run unit tests
         run: npm run test:unit
         env:
           NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          MONGODB_TIMEOUT: 30000
 
       - name: Run integration tests
         run: npm run test:integration
         env:
           NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          MONGODB_TIMEOUT: 30000
 
       - name: Run performance tests
         run: npm run test:performance
         env:
           NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          MONGODB_TIMEOUT: 30000
 
       - name: Generate test coverage
         run: npm run test:coverage
         env:
           NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test?replicaSet=test-rs
+          MONGODB_TIMEOUT: 30000
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
