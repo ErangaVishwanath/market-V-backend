@@ -103,12 +103,12 @@ on:
     branches:
       - main
     paths:
-      - "server/**"
+      - "**"
   pull_request:
     branches:
       - main
     paths:
-      - "server/**"
+      - "**"
   workflow_dispatch:
 
 jobs:
@@ -135,7 +135,7 @@ jobs:
         id: npm-cache
         with:
           path: ${{ steps.npm-cache-dir.outputs.dir }}
-          key: ${{ runner.os }}-node-${{ hashFiles('server/package-lock.json') }}
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
 
@@ -146,12 +146,16 @@ jobs:
           mongodb-port: 27017
 
       - name: Install dependencies
-        working-directory: server
         run: npm ci
 
       - name: Use .env.test file
-        working-directory: server
-        run: cp .env.test .env
+        run: |
+          if [ -f ".env.test" ]; then
+            cp .env.test .env
+          else
+            echo "Warning: .env.test file not found"
+            touch .env
+          fi
         shell: bash
 
       - name: Wait for MongoDB
@@ -161,7 +165,6 @@ jobs:
         shell: bash
 
       - name: Run Unit Tests
-        working-directory: server
         run: npm run test:unit
         env:
           NODE_ENV: test
@@ -170,7 +173,6 @@ jobs:
           MOCHA_TIMEOUT: 30000
 
       - name: Run Integration Tests
-        working-directory: server
         run: npm run test:integration
         env:
           NODE_ENV: test
@@ -179,7 +181,6 @@ jobs:
           MOCHA_TIMEOUT: 30000
 
       - name: Run Performance Tests
-        working-directory: server
         run: npm run test:performance
         env:
           NODE_ENV: test
@@ -188,7 +189,6 @@ jobs:
           MOCHA_TIMEOUT: 30000
 
       - name: Generate Test Coverage
-        working-directory: server
         run: npm run test:coverage
         env:
           NODE_ENV: test
@@ -200,5 +200,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: server/coverage
+          path: coverage
           retention-days: 7
